@@ -1,3 +1,4 @@
+
 import os
 import re
 import sqlite3
@@ -9,6 +10,7 @@ import requests
 from dotenv import load_dotenv
 
 load_dotenv()
+
 from flask import (
     Flask, render_template, request, send_file,
     redirect, url_for, session, flash
@@ -16,7 +18,8 @@ from flask import (
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import A4     
+from reportlab.lib.pagesizes import A4
+
 app = Flask(__name__)
 
 app.secret_key = os.environ.get("SECRET_KEY", "dev-key-change-before-deployment")
@@ -28,6 +31,8 @@ app.config["MAX_CONTENT_LENGTH"] = 50 * 1024 * 1024
 os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 
 ALLOWED_AUDIO = {"mp3", "wav", "m4a", "ogg"}
+
+
 # Database connection
 def get_db_connection():
     conn = sqlite3.connect("meeting_minutes.db")
@@ -64,6 +69,7 @@ def init_db():
     conn.commit()
     conn.close()
 
+
 # Audio transcription will use Groq Cloud API
 
 # Generate meeting minutes using Groq AI
@@ -72,45 +78,30 @@ def generate_minutes(conversation):
     prompt = f"""
 You are an expert meeting minutes assistant.
 
-IMPORTANT:
-- Include every explicit agreement or choice under DECISIONS.
-- Never write "Not specified" when a decision is clearly mentioned.
-- Keep ACTION ITEMS separate from DECISIONS.
+Generate clear, professional meeting minutes from the conversation below.
 
-Analyze the following meeting conversation.
+IMPORTANT RULES:
+- Read the entire conversation carefully.
+- Use only information explicitly mentioned.
+- Do not invent names, dates, decisions, or deadlines.
+- Include every agreed decision under Decisions.
+- Include every assigned task under Action Items.
+- If no decision or task is mentioned, write "No items discussed."
+- Summarize the actual discussion.
 
-Prepare these three sections:
+OUTPUT FORMAT:
 
-1. SUMMARY:
-Write a clear, concise summary in your own words.
+## Meeting Summary
+Write a short paragraph summarizing the actual meeting.
 
-2. DECISIONS:
-List only decisions that participants actually made.
-Do not invent decisions.
+## Decisions
+- List each agreed decision.
 
-3. ACTION ITEMS:
-Identify every task assigned or agreed upon during the meeting.
-Include all tasks, even when the same task is mentioned under DECISIONS.
-For each task, include the responsible person and deadline if mentioned.
-Do not omit any person's assigned task.
-Do not invent missing information.
-
-If a section has no relevant information, write:
-Not specified.
+## Action Items
+- Person responsible: Task – Deadline
 
 MEETING CONVERSATION:
 {conversation}
-
-Return the result using exactly this format:
-
-SUMMARY:
-...
-
-DECISIONS:
-- ...
-
-ACTION ITEMS:
-- ...
 """
 
     try:
@@ -134,22 +125,40 @@ ACTION ITEMS:
         response.raise_for_status()
 
         result = response.json()["choices"][0]["message"]["content"]
+        print("RAW AI RESPONSE:", result)
 
-        summary = result.split("DECISIONS:")[0]
-        summary = summary.replace("SUMMARY:", "").strip()
+        sections = {
+            "summary": [],
+            "decisions": [],
+            "action_items": []
+        }
 
-        decisions_text = result.split("DECISIONS:")[1].split("ACTION ITEMS:")[0]
-        action_text = result.split("ACTION ITEMS:")[1]
+        current_section = None
+
+        for raw_line in result.replace("**", "").splitlines():
+            line = raw_line.strip().lstrip("#").strip()
+            heading = line.rstrip(":").lower()
+
+            if heading in ["meeting summary", "summary"]:
+                current_section = "summary"
+            elif heading == "decisions":
+                current_section = "decisions"
+            elif heading == "action items":
+                current_section = "action_items"
+            elif current_section and line:
+                sections[current_section].append(line)
+
+        summary = "\n".join(sections["summary"]).strip()
 
         decisions = [
             line.strip("- ").strip()
-            for line in decisions_text.splitlines()
+            for line in sections["decisions"]
             if line.strip() and line.strip("- ").strip()
         ]
 
         action_items = [
             line.strip("- ").strip()
-            for line in action_text.splitlines()
+            for line in sections["action_items"]
             if line.strip() and line.strip("- ").strip()
         ]
 
@@ -200,6 +209,7 @@ def register():
         finally:
             conn.close()
 
+
     return render_template("register.html")
 
 
@@ -237,6 +247,9 @@ def logout():
     session.clear()
 
     return redirect(url_for("login"))
+
+
+# Dashboard
 @app.route("/dashboard")
 def dashboard():
 
@@ -265,6 +278,7 @@ def dashboard():
     )
 
 
+# Meeting Details
 @app.route("/meeting/<int:meeting_id>")
 def meeting_details(meeting_id):
 
@@ -292,9 +306,12 @@ def meeting_details(meeting_id):
         "meeting_details.html",
         meeting=meeting
     )
-    # Home page
+
+
+# Home page
 @app.route("/")
 def home():
+
     if "user_id" not in session:
         return redirect(url_for("login"))
 
@@ -309,6 +326,7 @@ def generate():
         return redirect(url_for("login"))
 
     conversation = request.form.get("conversation", "").strip()
+
     if not conversation:
         return render_template(
             "index.html",
@@ -316,6 +334,7 @@ def generate():
         )
 
     minutes = generate_minutes(conversation)
+
     conn = get_db_connection()
 
     conn.execute(
@@ -394,9 +413,9 @@ def upload_audio():
     )
 
     audio.save(filepath)
-       
+
     try:
-     # Convert audio into text using Groq Cloud
+        # Convert audio into text using Groq Cloud
         with open(filepath, "rb") as audio_file:
             response = requests.post(
                 "https://api.groq.com/openai/v1/audio/transcriptions",
@@ -414,6 +433,7 @@ def upload_audio():
             )
 
         response.raise_for_status()
+
         conversation = response.json().get("text", "").strip()
 
         print("WHISPER TRANSCRIPT:", conversation)
@@ -426,6 +446,7 @@ def upload_audio():
 
         # Generate meeting minutes
         minutes = generate_minutes(conversation)
+
         conn = get_db_connection()
 
         conn.execute(
@@ -474,6 +495,7 @@ def download():
     summary = request.form.get("summary", "")
     decisions = request.form.getlist("decisions")
     action_items = request.form.getlist("action_items")
+
     pdf_buffer = BytesIO()
 
     pdf = canvas.Canvas(pdf_buffer, pagesize=A4)
@@ -546,7 +568,9 @@ def download():
     )
 
 
+# Initialize database
 init_db()
+
 
 if __name__ == "__main__":
     app.run(
