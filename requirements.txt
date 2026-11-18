@@ -1,0 +1,8 @@
+
+Flask
+Werkzeug
+reportlab
+openai-whisper
+requests
+gunicorn
+python-dotenv

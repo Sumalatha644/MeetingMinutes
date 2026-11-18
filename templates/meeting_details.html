@@ -1,0 +1,84 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Meeting Details</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f9;
+            margin: 0;
+            padding: 30px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: auto;
+        }
+
+        h1 {
+            color: #243b64;
+        }
+
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            margin-top: 20px;
+            box-shadow: 0 2px 8px #ddd;
+        }
+
+        h2 {
+            color: #243b64;
+        }
+
+        p {
+            line-height: 1.6;
+            white-space: pre-line;
+        }
+
+        a {
+            display: inline-block;
+            margin-top: 20px;
+            color: white;
+            background: #243b64;
+            padding: 12px 20px;
+            border-radius: 5px;
+            text-decoration: none;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>Meeting Details</h1>
+
+    <div class="card">
+        <h2>Meeting Summary</h2>
+        <p>{{ meeting['summary'] }}</p>
+    </div>
+
+    <div class="card">
+        <h2>Decisions</h2>
+        <p>{{ meeting['decisions'] }}</p>
+    </div>
+
+    <div class="card">
+        <h2>Action Items</h2>
+        <p>{{ meeting['action_items'] }}</p>
+    </div>
+
+    <div class="card">
+        <h2>Meeting Date</h2>
+        <p>{{ meeting['created_at'] }}</p>
+    </div>
+
+    <a href="{{ url_for('dashboard') }}">Back to Dashboard</a>
+
+</div>
+
+</body>
+</html>

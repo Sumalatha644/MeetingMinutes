@@ -1,0 +1,103 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard - Meeting Minutes Generator</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f9;
+            margin: 0;
+            padding: 30px;
+        }
+
+        h1 {
+            color: #243b64;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: auto;
+        }
+
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            margin-top: 20px;
+            box-shadow: 0 2px 8px #ddd;
+        }
+
+        .count {
+            font-size: 35px;
+            color: #243b64;
+            font-weight: bold;
+        }
+
+        a {
+            color: #243b64;
+            text-decoration: none;
+            margin-right: 15px;
+        }
+
+        .meeting {
+            border-bottom: 1px solid #ddd;
+            padding: 15px 0;
+        }
+
+        button {
+            padding: 12px 20px;
+            background: #243b64;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>Meeting Minutes Dashboard</h1>
+
+    <p>Welcome, {{ session.get('username') }}!</p>
+
+    <div class="card">
+        <h2>Total Meetings</h2>
+        <div class="count">{{ total_meetings }}</div>
+    </div>
+
+    <div class="card">
+        <h2>Recent Meetings</h2>
+
+        {% if meetings %}
+            {% for meeting in meetings %}
+                <div class="meeting">
+                    <p>{{ meeting['summary'] }}</p>
+
+<a href="{{ url_for('meeting_details', meeting_id=meeting['id']) }}">
+    View Details
+</a>
+                    <small>{{ meeting['created_at'] }}</small>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p>No meetings generated yet.</p>
+        {% endif %}
+    </div>
+
+    <div class="card">
+        <a href="{{ url_for('home') }}">
+            <button>Create New Meeting</button>
+        </a>
+
+        <a href="{{ url_for('logout') }}">Logout</a>
+    </div>
+
+</div>
+
+</body>
+</html>
