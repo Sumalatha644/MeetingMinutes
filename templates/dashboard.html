@@ -4,6 +4,10 @@
 <head>
     <title>Dashboard - Meeting Minutes Generator</title>
 
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+    <meta name="theme-color" content="#2563eb">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -99,5 +103,14 @@
 
 </div>
 
+<script>
+    if ("serviceWorker" in navigator) {
+        window.addEventListener("load", function () {
+            navigator.serviceWorker.register(
+                "{{ url_for('static', filename='service-worker.js') }}"
+            );
+        });
+    }
+</script>
 </body>
 </html>
