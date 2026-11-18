@@ -47,7 +47,13 @@
         .success {
             color: green;
         }
-    </style>
+      </style>
+
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+
+    <meta name="theme-color" content="#2563eb">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+
 </head>
 
 <body>
@@ -140,6 +146,16 @@
     </div>
 
     {% endif %}
+
+<<script>
+    if ("serviceWorker" in navigator) {
+        window.addEventListener("load", function () {
+            navigator.serviceWorker.register(
+                "{{ url_for('static', filename='service-worker.js') }}"
+            );
+        });
+    }
+</script>
 
 </body>
 </html>

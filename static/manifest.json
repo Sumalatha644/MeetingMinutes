@@ -1,0 +1,10 @@
+{
+  "name": "Meeting Minutes Generator",
+  "short_name": "Meeting Minutes",
+  "description": "Generate meeting minutes from text conversations and audio recordings.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
+  "orientation": "portrait"
+}
